@@ -1,0 +1,24 @@
+language: generic
+sudo: required
+services:
+  - docker 
+
+before_install:
+  - docker build -t gadagi/react-test -f ./client/Dockerfile.dev ./client
+
+script:
+  - docker run -e CI=true gadagi/react-test npm test
+
+after_success:
+  - docker build -t gadagi/multi-client ./client
+  - docker build -t gadagi/multi-nginx ./nginx
+  - docker build -t gadagi/multi-server ./server
+  - docker build -t gadagi/multi-worker ./worker
+  
+  # Login  to the docker CLI
+  - echo "$DOCKER_PASSWORD" | docker login -u "$DOCKER_ID" --paswword-stdin
+  # Take those images and push them to docker hub
+  - docker push gadagi/multi-client
+  - docker push gadagi/multi-nginx
+  - docker push gadagi/multi-server
+  - docker push gadagi/multi-worker
